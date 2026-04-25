@@ -14,4 +14,14 @@ class Event {
     required this.location,
     required this.icon,
   });
+
+  factory Event.fromJson(Map<String, dynamic> json) {
+    return Event(
+      title: json['title'],
+      category: json['category'],
+      date: json['date'],
+      location: json['location'],
+      icon: Icons.event,
+    );
+  }
 }

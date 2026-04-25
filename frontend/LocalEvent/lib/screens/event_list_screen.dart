@@ -1,32 +1,48 @@
 import 'package:flutter/material.dart';
-import '../models/event_model.dart'; // Importujemy model z folderu obok
+import '../models/event.dart';
+import '../services/api_service.dart';
 
-class EventListScreen extends StatelessWidget {
-  EventListScreen({super.key});
+class EventListScreen extends StatefulWidget {
+  const EventListScreen({super.key});
 
-  final List<Event> dummyEvents = [
-    Event(
-      title: 'Warsztaty z Fluttera',
-      category: 'Edukacja',
-      date: '12 Maj 2026, 17:00',
-      location: 'Sala 101',
-      icon: Icons.code,
-    ),
-  ];
+  @override
+  State<EventListScreen> createState() => _EventListScreenState();
+}
+
+class _EventListScreenState extends State<EventListScreen> {
+  late Future<List<Event>> futureEvents;
+
+  @override
+  void initState() {
+    super.initState();
+    futureEvents = ApiService().fetchEvents();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(8.0),
-      itemCount: dummyEvents.length,
-      itemBuilder: (context, index) {
-        final event = dummyEvents[index];
-        return Card(
-          child: ListTile(
-            leading: Icon(event.icon),
-            title: Text(event.title),
-            subtitle: Text('${event.date}\n${event.location}'),
-          ),
+    return FutureBuilder<List<Event>>(
+      future: futureEvents,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text("Błąd: ${snapshot.error}"));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text("Brak wydarzeń"));
+        }
+
+        return ListView.builder(
+          itemCount: snapshot.data!.length,
+          itemBuilder: (context, index) {
+            final event = snapshot.data![index];
+            return Card(
+              margin: const EdgeInsets.all(8),
+              child: ListTile(
+                title: Text(event.title),
+                subtitle: Text("${event.date} - ${event.location}"),
+              ),
+            );
+          },
         );
       },
     );

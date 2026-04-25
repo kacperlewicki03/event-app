@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'event_list_screen.dart';
+import 'map_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -12,8 +13,8 @@ class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    EventListScreen(),
-    const Center(child: Text('Mapa')),
+    const EventListScreen(),
+    const MapScreen(), // <--- Nasza nowa mapa
     const Center(child: Text('Profil')),
   ];
 
