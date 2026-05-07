@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
 
 class Event {
+  final int id;
   final String title;
+  final String description;
   final String category;
   final String date;
   final String location;
-  final IconData icon;
+  final double latitude;
+  final double longitude;
 
   Event({
+    required this.id,
     required this.title,
+    required this.description,
     required this.category,
     required this.date,
     required this.location,
-    required this.icon,
+    required this.latitude,
+    required this.longitude,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
+      id: json['id'],
       title: json['title'],
+      description: json['description'],
       category: json['category'],
       date: json['date'],
       location: json['location'],
-      icon: Icons.event,
+      latitude: (json['latitude'] as num).toDouble(),
+      longitude: (json['longitude'] as num).toDouble(),
     );
   }
 }

@@ -2,8 +2,26 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
+import sqlite3
 
 app = FastAPI()
+conn = sqlite3.connect("events.db", check_same_thread=False)
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT,
+    description TEXT,
+    category TEXT,
+    date TEXT,
+    location TEXT,
+    latitude REAL,
+    longitude REAL
+)
+""")
+
+conn.commit()
 
 app.add_middleware(
     CORSMiddleware,
@@ -14,20 +32,114 @@ app.add_middleware(
 
 # Model danych
 class Event(BaseModel):
+    id: int | None = None
     title: str
+    description: str
     category: str
     date: str
     location: str
+    latitude: float
+    longitude: float
 
-events_db = [
-    {"title": "Warsztaty Python z API", "category": "Edukacja", "date": "20 Maj 2026", "location": "Online"},
-    {"title": "Spotkanie przy kawie", "category": "Integracja", "date": "22 Maj 2026", "location": "Kawiarnia 'KOD'"},
-    {"title": "Mecz piłki nożnej", "category": "Sport", "date": "25 Maj 2026", "location": "Orlik Akademicki"}
-]
+class EventCreate(BaseModel):
+    title: str
+    description: str
+    category: str
+    date: str
+    location: str
+    latitude: float
+    longitude: float
 
-@app.get("/events", response_model=List[Event])
+@app.get("/events")
 async def get_events():
-    return events_db
+    cursor.execute("SELECT * FROM events")
+
+    rows = cursor.fetchall()
+
+    events = []
+
+    for row in rows:
+        events.append({
+            "id": row[0],
+            "title": row[1],
+            "description": row[2],
+            "category": row[3],
+            "date": row[4],
+            "location": row[5],
+            "latitude": row[6],
+            "longitude": row[7],
+        })
+
+    return events
+
+@app.post("/events")
+async def create_event(event: Event):
+
+    cursor.execute("""
+    INSERT INTO events (
+        title,
+        description,
+        category,
+        date,
+        location,
+        latitude,
+        longitude
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        event.title,
+        event.description,
+        event.category,
+        event.date,
+        event.location,
+        event.latitude,
+        event.longitude
+    ))
+
+    conn.commit()
+
+    return {"message": "event created"}
+
+@app.delete("/events/{event_id}")
+async def delete_event(event_id: int):
+
+    cursor.execute(
+        "DELETE FROM events WHERE id = ?",
+        (event_id,)
+    )
+
+    conn.commit()
+
+    return {"message": "deleted"}
+
+@app.put("/events/{event_id}")
+async def update_event(event_id: int, event: Event):
+
+    cursor.execute("""
+    UPDATE events
+    SET
+        title = ?,
+        description = ?,
+        category = ?,
+        date = ?,
+        location = ?,
+        latitude = ?,
+        longitude = ?
+    WHERE id = ?
+    """, (
+        event.title,
+        event.description,
+        event.category,
+        event.date,
+        event.location,
+        event.latitude,
+        event.longitude,
+        event_id
+    ))
+
+    conn.commit()
+
+    return {"message": "updated"}
 
 if __name__ == "__main__":
     import uvicorn

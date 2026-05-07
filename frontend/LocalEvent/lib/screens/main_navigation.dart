@@ -14,7 +14,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   final List<Widget> _screens = [
     const EventListScreen(),
-    const MapScreen(), // <--- Nasza nowa mapa
+    const MapScreen(),
     const Center(child: Text('Profil')),
   ];
 
