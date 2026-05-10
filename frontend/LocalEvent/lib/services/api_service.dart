@@ -5,7 +5,7 @@ import '../models/event.dart';
 class ApiService {
   // UWAGA: Jeśli testujesz na emulatorze Androida, zamiast localhost wpisz 10.0.2.2
   // Jeśli na iPhone/Web - localhost jest OK.
-  static const String baseUrl = "http://localhost:8000";
+  static const String baseUrl = "http://10.0.2.2:8000";
 
   Future<List<Event>> fetchEvents() async {
     final response = await http.get(Uri.parse('$baseUrl/events'));

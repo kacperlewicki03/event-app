@@ -21,7 +21,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   TimeOfDay? selectedTime;
 
   String selectedCategory = "Ogólne";
-  
+
   final List<String> categories = [
     "Ogólne",
     "Edukacja",
@@ -36,12 +36,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
     final place = placemarks.first;
 
-    return [
-      place.street,
-      place.subLocality,
-      place.locality,
-      place.country
-    ].where((e) => e != null && e.isNotEmpty).join(", ");
+    return [place.street, place.subLocality, place.locality, place.country]
+        .where((e) => e != null && e.isNotEmpty)
+        .join(", ");
   }
 
   @override
@@ -61,7 +58,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               decoration: const InputDecoration(labelText: "Opis"),
             ),
             DropdownButtonFormField<String>(
-              initialValue: selectedCategory,
+              value: selectedCategory,
               decoration: const InputDecoration(labelText: "Kategoria"),
               items: categories.map((category) {
                 return DropdownMenuItem(
@@ -75,10 +72,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 });
               },
             ),
-
-
             const SizedBox(height: 20),
-
             ElevatedButton(
               onPressed: () async {
                 final pickedDate = await showDatePicker(
@@ -96,17 +90,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               },
               child: const Text("Wybierz datę"),
             ),
-
             const SizedBox(height: 10),
-
             Text(
               selectedDate == null
-                ? "Nie wybrano daty"
-                : "Data: ${selectedDate!.toLocal().toString().split(' ')[0]}",
+                  ? "Nie wybrano daty"
+                  : "Data: ${selectedDate!.toLocal().toString().split(' ')[0]}",
             ),
-
             const SizedBox(height: 20),
-
             ElevatedButton(
               onPressed: () async {
                 final pickedTime = await showTimePicker(
@@ -122,17 +112,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               },
               child: const Text("Wybierz godzinę"),
             ),
-
             const SizedBox(height: 10),
-
             Text(
               selectedTime == null
-                ? "Nie wybrano godziny"
-                : "Godzina: ${selectedTime!.format(context)}",
+                  ? "Nie wybrano godziny"
+                  : "Godzina: ${selectedTime!.format(context)}",
             ),
-
             const SizedBox(height: 20),
-
             ElevatedButton(
               onPressed: () async {
                 final loc = await Navigator.push(
@@ -155,18 +141,14 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               },
               child: const Text("Wybierz lokalizację na mapie"),
             ),
-
             const SizedBox(height: 20),
-
-            Text(
-              selectedLocationName ?? "Nie wybrano lokalizacji"
-            ),
-
+            Text(selectedLocationName ?? "Nie wybrano lokalizacji"),
             const Spacer(),
-
             ElevatedButton(
               onPressed: () async {
-                if (selectedLocation == null || selectedDate == null || selectedTime == null ) {
+                if (selectedLocation == null ||
+                    selectedDate == null ||
+                    selectedTime == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Uzupełnij wszystkie dane!")),
                   );
@@ -178,7 +160,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   );
                   return;
                 }
-                       
+
                 final dateTime = DateTime(
                   selectedDate!.year,
                   selectedDate!.month,
@@ -187,8 +169,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   selectedTime!.minute,
                 );
 
-                final name = selectedLocationName ?? 
-                  await getLocationName(selectedLocation!);
+                final name = selectedLocationName ??
+                    await getLocationName(selectedLocation!);
 
                 await ApiService().createEvent({
                   "title": titleController.text,

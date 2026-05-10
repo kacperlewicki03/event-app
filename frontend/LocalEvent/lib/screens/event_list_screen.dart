@@ -41,17 +41,14 @@ class _EventListScreenState extends State<EventListScreen> {
   void filterEvents(String query) {
     setState(() {
       filteredEvents = allEvents.where((event) {
-        final matchesSearch = event.title
-          .toLowerCase()
-          .contains(query.toLowerCase());
+        final matchesSearch =
+            event.title.toLowerCase().contains(query.toLowerCase());
 
-        final matchesCategory =
-          selectedCategoryFilter == "Wszystkie"
+        final matchesCategory = selectedCategoryFilter == "Wszystkie"
             ? true
             : event.category == selectedCategoryFilter;
 
         return matchesSearch && matchesCategory;
-        
       }).toList();
     });
   }
@@ -98,26 +95,22 @@ class _EventListScreenState extends State<EventListScreen> {
                   ),
                 ),
               ),
-
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: DropdownButtonFormField<String>(
-                  initialValue: selectedCategoryFilter,
-
+                  value: selectedCategoryFilter,
                   decoration: InputDecoration(
                     labelText: "Filtr kategorii",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-
                   items: categoryFilters.map((category) {
                     return DropdownMenuItem(
                       value: category,
                       child: Text(category),
                     );
                   }).toList(),
-
                   onChanged: (value) {
                     setState(() {
                       selectedCategoryFilter = value!;
@@ -127,14 +120,11 @@ class _EventListScreenState extends State<EventListScreen> {
                   },
                 ),
               ),
-
               const SizedBox(height: 8),
-
               Expanded(
                 child: ListView.builder(
                   itemCount: filteredEvents.length,
                   itemBuilder: (context, index) {
-
                     final event = filteredEvents[index];
                     final color = getCategoryColor(event.category);
 
@@ -155,10 +145,11 @@ class _EventListScreenState extends State<EventListScreen> {
                         ),
                         child: ListTile(
                           title: Text(event.title),
-                          subtitle: Text("${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.parse(event.date))} - ${event.location}"),
-
+                          subtitle: Text(
+                              "${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.parse(event.date))} - ${event.location}"),
                           trailing: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
                               color: color,
                               borderRadius: BorderRadius.circular(12),
@@ -168,11 +159,12 @@ class _EventListScreenState extends State<EventListScreen> {
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),
-
                           onTap: () async {
                             final result = await Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => EventDetailScreen(event: event),),
+                              MaterialPageRoute(
+                                builder: (_) => EventDetailScreen(event: event),
+                              ),
                             );
                             if (result == true) {
                               refreshEvents();
@@ -188,7 +180,6 @@ class _EventListScreenState extends State<EventListScreen> {
           );
         },
       ),
-
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () async {
