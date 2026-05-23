@@ -5,6 +5,7 @@ import 'package:geocoding/geocoding.dart';
 
 import '../models/event.dart';
 import '../services/api_service.dart';
+import '../utils/colors/app_colors.dart';
 
 class EditEventScreen extends StatefulWidget {
   final Event event;
@@ -49,157 +50,246 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
     selectedDate = DateTime.tryParse(widget.event.date);
 
-    selectedTime = TimeOfDay.fromDateTime(
-      DateTime.parse(widget.event.date),
-    );
+    try {
+      selectedTime = TimeOfDay.fromDateTime(
+        DateTime.parse(widget.event.date),
+      );
+    } catch (_) {
+      selectedTime = TimeOfDay.now();
+    }
   }
 
   Future<String> getLocationName(LatLng latLng) async {
-    List<Placemark> placemarks =
-        await placemarkFromCoordinates(latLng.latitude, latLng.longitude);
-
-    final place = placemarks.first;
-
-    return [place.street, place.subLocality, place.locality, place.country]
-        .where((e) => e != null && e.isNotEmpty)
-        .join(", ");
+    try {
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(latLng.latitude, latLng.longitude);
+      final place = placemarks.first;
+      return [place.street, place.subLocality, place.locality]
+          .where((e) => e != null && e.isNotEmpty)
+          .join(", ");
+    } catch (e) {
+      return "Wybrany punkt na mapie";
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Edytuj wydarzenie")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: "Nazwa wydarzenia"),
-            ),
-            TextField(
-              controller: descriptionController,
-              decoration: const InputDecoration(labelText: "Opis"),
-            ),
-            const SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-              value: selectedCategory,
-              items: categories
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedCategory = value!;
-                });
-              },
-              decoration: const InputDecoration(labelText: "Kategoria"),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () async {
-                final pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: selectedDate ?? DateTime.now(),
-                  firstDate: DateTime(2024),
-                  lastDate: DateTime(2030),
-                );
-
-                if (pickedDate != null) {
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text("Edytuj wydarzenie"),
+        backgroundColor: AppColors.surface,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: "Nazwa wydarzenia",
+                  hintText: "Zmień nazwę wydarzenia...",
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descriptionController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: "Opis",
+                  hintText: "Zmień opis lub agendę...",
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedCategory,
+                decoration: const InputDecoration(labelText: "Kategoria"),
+                dropdownColor: AppColors.surface,
+                items: categories.map((c) {
+                  return DropdownMenuItem(
+                      value: c,
+                      child: Text(c,
+                          style:
+                              const TextStyle(color: AppColors.textPrimary)));
+                }).toList(),
+                onChanged: (value) {
                   setState(() {
-                    selectedDate = pickedDate;
+                    selectedCategory = value!;
                   });
-                }
-              },
-              child: const Text("Zmień datę"),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              selectedDate == null
-                  ? "Brak daty"
-                  : "Data: ${selectedDate.toString().split(" ")[0]}",
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () async {
-                final picked = await showTimePicker(
-                  context: context,
-                  initialTime: selectedTime ?? TimeOfDay.now(),
-                );
-
-                if (picked != null) {
-                  setState(() {
-                    selectedTime = picked;
-                  });
-                }
-              },
-              child: const Text("Zmień godzinę"),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              selectedTime == null
-                  ? "Brak godziny"
-                  : "Godzina: ${selectedTime!.format(context)}",
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MapPickerScreen(
-                      onLocationSelected: (position) {
-                        Navigator.pop(context, position);
-                      },
-                    ),
-                  ),
-                );
-                if (result != null) {
-                  final name = await getLocationName(result);
-                  setState(() {
-                    selectedLocation = result;
-                    selectedLocationName = name;
-                  });
-                }
-              },
-              child: const Text("Zmień lokalizację"),
-            ),
-            const SizedBox(height: 10),
-            Text(selectedLocationName ?? ""),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: () async {
-                if (selectedLocation == null ||
-                    selectedDate == null ||
-                    selectedTime == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Uzupełnij wszystkie dane")),
+                },
+              ),
+              const SizedBox(height: 24),
+              Text(
+                "Modyfikuj szczegóły",
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary.withOpacity(0.8)),
+              ),
+              const SizedBox(height: 12),
+              _buildSelectorCard(
+                icon: Icons.calendar_today_rounded,
+                title: selectedDate == null
+                    ? "Wybierz datę"
+                    : "Data: ${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}",
+                isSelected: selectedDate != null,
+                onTap: () async {
+                  final pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate ?? DateTime.now(),
+                    firstDate:
+                        DateTime.now().subtract(const Duration(days: 365)),
+                    lastDate: DateTime(2030),
                   );
-                  return;
-                }
 
-                final dateTime = DateTime(
-                  selectedDate!.year,
-                  selectedDate!.month,
-                  selectedDate!.day,
-                  selectedTime!.hour,
-                  selectedTime!.minute,
-                );
+                  if (pickedDate != null) {
+                    setState(() {
+                      selectedDate = pickedDate;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildSelectorCard(
+                icon: Icons.access_time_rounded,
+                title: selectedTime == null
+                    ? "Wybierz godzinę"
+                    : "Godzina: ${selectedTime!.format(context)}",
+                isSelected: selectedTime != null,
+                onTap: () async {
+                  final picked = await showTimePicker(
+                    context: context,
+                    initialTime: selectedTime ?? TimeOfDay.now(),
+                  );
 
-                await ApiService().updateEvent(widget.event.id, {
-                  "title": titleController.text,
-                  "description": descriptionController.text,
-                  "category": selectedCategory,
-                  "date": dateTime.toIso8601String(),
-                  "location": selectedLocationName,
-                  "latitude": selectedLocation!.latitude,
-                  "longitude": selectedLocation!.longitude,
-                });
+                  if (picked != null) {
+                    setState(() {
+                      selectedTime = picked;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildSelectorCard(
+                icon: Icons.map_rounded,
+                title: selectedLocationName ?? "Wybierz lokalizację na mapie",
+                isSelected: selectedLocation != null,
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MapPickerScreen(
+                        onLocationSelected: (position) {
+                          Navigator.pop(context, position);
+                        },
+                      ),
+                    ),
+                  );
+                  if (result != null) {
+                    setState(
+                        () => selectedLocationName = "Aktualizacja adresu...");
+                    final name = await getLocationName(result);
+                    setState(() {
+                      selectedLocation = result;
+                      selectedLocationName = name;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () async {
+                  if (selectedLocation == null ||
+                      selectedDate == null ||
+                      selectedTime == null ||
+                      titleController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content:
+                            Text("Uzupełnij wszystkie dane przed zapisem!"),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                    return;
+                  }
 
-                Navigator.pop(context, true);
-              },
-              child: const Text("Zapisz zmiany"),
-            ),
-          ],
+                  final formattedDate =
+                      "${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}";
+                  final formattedTime = selectedTime!.format(context);
+
+                  try {
+                    await ApiService().updateEvent(widget.event.id, {
+                      "title": titleController.text.trim(),
+                      "description": descriptionController.text.trim(),
+                      "category": selectedCategory,
+                      "date": formattedDate,
+                      "time": formattedTime,
+                      "location": selectedLocationName,
+                      "latitude": selectedLocation!.latitude,
+                      "longitude": selectedLocation!.longitude,
+                      "image_url": "",
+                      "status": "UPCOMING"
+                    });
+
+                    if (mounted) {
+                      Navigator.pop(context, true);
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text("Błąd aktualizacji: $e"),
+                            backgroundColor: AppColors.error),
+                      );
+                    }
+                  }
+                },
+                child: const Text("Zapisz zmiany"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectorCard({
+    required IconData icon,
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isSelected
+              ? AppColors.primary
+              : AppColors.textSecondary.withOpacity(0.15),
+          width: isSelected ? 1.5 : 1,
+        ),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        leading: Icon(icon,
+            color: isSelected ? AppColors.primary : AppColors.textSecondary),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 14,
+          ),
+        ),
+        trailing: Icon(
+          Icons.arrow_forward_ios_rounded,
+          size: 14,
+          color: isSelected
+              ? AppColors.primary
+              : AppColors.textSecondary.withOpacity(0.4),
         ),
       ),
     );

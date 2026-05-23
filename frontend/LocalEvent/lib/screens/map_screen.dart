@@ -3,7 +3,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../services/api_service.dart';
 import '../models/event.dart';
 import 'event_detail_screen.dart';
-import '../utils/category_colors.dart';
+import '../utils/colors/app_colors.dart';
+import '../utils/colors/category_colors.dart';
 
 class MapScreen extends StatefulWidget {
   final void Function(LatLng)? onLocationSelected;
@@ -19,7 +20,7 @@ class _MapScreenState extends State<MapScreen> {
 
   Event? selectedEvent;
 
-  static const LatLng _centerOfPoland = LatLng(52.0688, 19.4797);
+  static const LatLng _wroclawCenter = LatLng(51.1079, 17.0385);
   LatLng? selectedLocation;
 
   late GoogleMapController mapController;
@@ -35,19 +36,14 @@ class _MapScreenState extends State<MapScreen> {
       events = data;
       markers = data.map((event) {
         return Marker(
-          markerId: MarkerId(event.title),
-          position: LatLng(event.latitude, event.longitude),
-          icon: getMarkerColor(event.category),
-          infoWindow: InfoWindow(
-            title: event.title,
-            snippet: event.location,
-          ),
-          onTap: () {
-            setState(() {
-              selectedEvent = event;
+            markerId: MarkerId(event.title),
+            position: LatLng(event.latitude, event.longitude),
+            icon: getMarkerColor(event.category),
+            onTap: () {
+              setState(() {
+                selectedEvent = event;
+              });
             });
-          }
-        );
       }).toSet();
     });
   }
@@ -66,8 +62,8 @@ class _MapScreenState extends State<MapScreen> {
           GoogleMap(
             onMapCreated: _onMapCreated,
             initialCameraPosition: const CameraPosition(
-              target: _centerOfPoland,
-              zoom: 6.0,
+              target: _wroclawCenter,
+              zoom: 13.0,
             ),
             markers: markers,
             onTap: (LatLng position) {
@@ -76,23 +72,23 @@ class _MapScreenState extends State<MapScreen> {
               });
             },
           ),
-
           if (selectedEvent != null)
             Positioned(
               bottom: 0,
               left: 0,
               right: 0,
-              child: Container(
-                margin: const EdgeInsets.all(12),
-                padding: const EdgeInsets.all(16),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 15,
-                      offset: const Offset(0, -3),
+                      color: AppColors.textPrimary.withOpacity(0.12),
+                      blurRadius: 24,
+                      offset: const Offset(0, -4),
                     ),
                   ],
                 ),
@@ -101,49 +97,86 @@ class _MapScreenState extends State<MapScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.event, size: 28),
-                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryLight.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            selectedEvent!.category.toUpperCase(),
+                            style: const TextStyle(
+                              color: AppColors.primaryLight,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded,
+                              color: AppColors.textSecondary, size: 20),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            setState(() {
+                              selectedEvent = null;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Tytuł wydarzenia
+                    Text(
+                      selectedEvent!.title,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_rounded,
+                            size: 18, color: AppColors.error),
+                        const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            selectedEvent!.title,
+                            selectedEvent!.location,
                             style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 10),
-
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, size: 18),
-                        const SizedBox(width: 5),
-                        Expanded(child: Text(selectedEvent!.location)),
-                      ],
-                    ),
-
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 20),
 
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: getCategoryColor(selectedEvent!.category).withValues(alpha: 0.85),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          backgroundColor:
+                              getCategoryColor(selectedEvent!.category),
+                          elevation: 0,
                         ),
                         onPressed: () async {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => EventDetailScreen(event: selectedEvent!),
+                              builder: (_) =>
+                                  EventDetailScreen(event: selectedEvent!),
                             ),
                           );
                           if (result == true) {

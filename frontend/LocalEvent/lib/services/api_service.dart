@@ -11,7 +11,6 @@ class ApiService {
     final response = await http.get(Uri.parse('$baseUrl/events'));
     if (response.statusCode == 200) {
       List<dynamic> body = json.decode(response.body);
-      // Mapujemy listę JSON na listę obiektów klasy Event
       return body.map((dynamic item) => Event.fromJson(item)).toList();
     } else {
       throw Exception("Nie udało się pobrać wydarzeń");

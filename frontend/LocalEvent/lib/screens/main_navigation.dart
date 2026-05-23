@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'event_list_screen.dart';
 import 'map_screen.dart';
+import '../utils/colors/app_colors.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -28,9 +29,33 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('LocalEvent'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.local_activity_rounded,
+                color: AppColors.primaryLight, size: 22),
+            const SizedBox(width: 8),
+            RichText(
+              text: const TextSpan(
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.7),
+                children: [
+                  TextSpan(
+                      text: "Local",
+                      style: TextStyle(color: AppColors.primary)),
+                  TextSpan(
+                      text: "Event",
+                      style: TextStyle(color: AppColors.primaryLight)),
+                ],
+              ),
+            ),
+          ],
+        ),
         centerTitle: true,
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: AppColors.surface,
+        elevation: 0,
       ),
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
