@@ -9,6 +9,7 @@ class Event {
   final String location;
   final double latitude;
   final double longitude;
+  final int? userId;
 
   Event({
     required this.id,
@@ -19,6 +20,7 @@ class Event {
     required this.location,
     required this.latitude,
     required this.longitude,
+    this.userId,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,7 @@ class Event {
       location: json['location'],
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
+      userId: json['user_id'] == null ? null : json['user_id'] as int,
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'screens/main_navigation.dart';
+import 'screens/auth_gate.dart';
 import 'utils/colors/app_colors.dart';
 
 void main() async {
@@ -90,7 +90,7 @@ class LocalEventApp extends StatelessWidget {
           bodyMedium: TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
       ),
-      home: const MainNavigation(),
+      home: const AuthGate(),
     );
   }
 }

@@ -9,8 +9,13 @@ import '../utils/colors/app_colors.dart';
 
 class EditEventScreen extends StatefulWidget {
   final Event event;
+  final bool ownedMode;
 
-  const EditEventScreen({super.key, required this.event});
+  const EditEventScreen({
+    super.key,
+    required this.event,
+    this.ownedMode = false,
+  });
 
   @override
   State<EditEventScreen> createState() => _EditEventScreenState();
@@ -220,18 +225,24 @@ class _EditEventScreenState extends State<EditEventScreen> {
                   final formattedTime = selectedTime!.format(context);
 
                   try {
-                    await ApiService().updateEvent(widget.event.id, {
-                      "title": titleController.text.trim(),
-                      "description": descriptionController.text.trim(),
-                      "category": selectedCategory,
-                      "date": formattedDate,
-                      "time": formattedTime,
-                      "location": selectedLocationName,
-                      "latitude": selectedLocation!.latitude,
-                      "longitude": selectedLocation!.longitude,
-                      "image_url": "",
-                      "status": "UPCOMING"
-                    });
+                    final eventData = {
+                        "title": titleController.text.trim(),
+                        "description": descriptionController.text.trim(),
+                        "category": selectedCategory,
+                        "date": formattedDate,
+                        "time": formattedTime,
+                        "location": selectedLocationName,
+                        "latitude": selectedLocation!.latitude,
+                        "longitude": selectedLocation!.longitude,
+                        "image_url": "",
+                        "status": "UPCOMING"
+                        };
+
+                    if (widget.ownedMode) {
+                      await ApiService().updateMyEvent(widget.event.id, eventData);
+                    } else {
+                      await ApiService().updateEvent(widget.event.id, eventData);
+                    }
 
                     if (mounted) {
                       Navigator.pop(context, true);

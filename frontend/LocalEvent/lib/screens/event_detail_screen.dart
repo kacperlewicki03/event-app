@@ -9,8 +9,13 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class EventDetailScreen extends StatelessWidget {
   final Event event;
+  final bool ownedMode;
 
-  const EventDetailScreen({super.key, required this.event});
+  const EventDetailScreen({
+    super.key,
+    required this.event,
+    this.ownedMode = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -249,7 +254,11 @@ class EventDetailScreen extends StatelessWidget {
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => EditEventScreen(event: event),
+                      builder: (_) => EditEventScreen(
+                        event: event,
+                        ownedMode: ownedMode,
+                        ),
+                      
                     ),
                   );
 
@@ -295,7 +304,11 @@ class EventDetailScreen extends StatelessWidget {
                   );
 
                   if (confirm == true) {
-                    await ApiService().deleteEvent(event.id);
+                    if (ownedMode) {
+                        await ApiService().deleteMyEvent(event.id);
+                        } else {
+                            await ApiService().deleteEvent(event.id);
+                            }
                     if (context.mounted) {
                       Navigator.pop(context, true);
                     }
