@@ -47,22 +47,23 @@ class ApiService {
   Future<void> deleteEvent(int id) async {
     final response = await http.delete(
       Uri.parse('$baseUrl/events/$id'),
+      headers: await _authHeaders(),
     );
 
     if (response.statusCode != 200) {
-      throw Exception("Nie udało się usunąć wydarzenia");
+      throw Exception(_errorMessage(response));
     }
   }
 
   Future<void> updateEvent(int id, Map<String, dynamic> event) async {
     final response = await http.put(
       Uri.parse('$baseUrl/events/$id'),
-      headers: {"Content-Type": "application/json"},
+      headers: await _authHeaders(),
       body: jsonEncode(event),
     );
 
     if (response.statusCode != 200) {
-      throw Exception("Nie udało się zaktualizować wydarzenia");
+      throw Exception(_errorMessage(response));
     }
   }
 

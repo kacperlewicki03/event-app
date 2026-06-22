@@ -405,31 +405,43 @@ async def create_event(event: Event):
     return {"message": "event created"}
 
 @app.delete("/events/{event_id}")
-async def delete_event(event_id: int):
-
+async def delete_event(
+    event_id: int,
+    current_user=Depends(get_current_user),
+):
     cursor.execute(
-        "DELETE FROM events WHERE id = ?",
-        (event_id,)
+        "DELETE FROM events WHERE id = ? AND user_id = ?",
+        (event_id, current_user["id"]),
     )
 
     conn.commit()
 
+    if cursor.rowcount == 0:
+        raise HTTPException(
+            status_code=403,
+            detail="Nie możesz usunąć wydarzenia innego użytkownika",
+        )
+
     return {"message": "deleted"}
 
-@app.put("/events/{event_id}")
-async def update_event(event_id: int, event: Event):
 
+@app.put("/events/{event_id}")
+async def update_event(
+    event_id: int,
+    event: Event,
+    current_user=Depends(get_current_user),
+):
     cursor.execute("""
-    UPDATE events
-    SET
-        title = ?,
-        description = ?,
-        category = ?,
-        date = ?,
-        location = ?,
-        latitude = ?,
-        longitude = ?
-    WHERE id = ?
+        UPDATE events
+        SET
+            title = ?,
+            description = ?,
+            category = ?,
+            date = ?,
+            location = ?,
+            latitude = ?,
+            longitude = ?
+        WHERE id = ? AND user_id = ?
     """, (
         event.title,
         event.description,
@@ -438,10 +450,17 @@ async def update_event(event_id: int, event: Event):
         event.location,
         event.latitude,
         event.longitude,
-        event_id
+        event_id,
+        current_user["id"],
     ))
 
     conn.commit()
+
+    if cursor.rowcount == 0:
+        raise HTTPException(
+            status_code=403,
+            detail="Nie możesz edytować wydarzenia innego użytkownika",
+        )
 
     return {"message": "updated"}
 

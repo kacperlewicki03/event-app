@@ -227,102 +227,131 @@ class EventDetailScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        padding:
-            const EdgeInsets.only(left: 20, right: 20, bottom: 24, top: 12),
-        decoration: BoxDecoration(color: AppColors.surface, boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          )
-        ]),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: categoryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                onPressed: () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EditEventScreen(
-                        event: event,
-                        ownedMode: ownedMode,
+      bottomNavigationBar: ownedMode
+          ? Container(
+              padding: const EdgeInsets.only(
+                left: 20,
+                right: 20,
+                bottom: 24,
+                top: 12,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.textPrimary.withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: categoryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                      
-                    ),
-                  );
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EditEventScreen(event: event),
+                          ),
+                        );
 
-                  if (result == true) {
-                    Navigator.pop(context, true);
-                  }
-                },
-                icon: const Icon(Icons.edit_rounded, size: 18),
-                label: const Text("Edytuj",
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 1,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error.withOpacity(0.1),
-                  foregroundColor: AppColors.error,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                onPressed: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text("Usuń wydarzenie"),
-                      content: const Text(
-                          "Czy na pewno chcesz usunąć to wydarzenie?"),
-                      actions: [
-                        TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text("Anuluj")),
-                        TextButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text("Usuń",
-                                style: TextStyle(color: AppColors.error))),
-                      ],
+                        if (result == true && context.mounted) {
+                          Navigator.pop(context, true);
+                        }
+                      },
+                      icon: const Icon(Icons.edit_rounded, size: 18),
+                      label: const Text(
+                        "Edytuj",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
                     ),
-                  );
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error.withOpacity(0.1),
+                        foregroundColor: AppColors.error,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text("Usuń wydarzenie"),
+                            content: const Text(
+                              "Czy na pewno chcesz usunąć to wydarzenie?",
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text("Anuluj"),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text(
+                                  "Usuń",
+                                  style: TextStyle(color: AppColors.error),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
 
-                  if (confirm == true) {
-                    if (ownedMode) {
-                        await ApiService().deleteMyEvent(event.id);
-                        } else {
-                            await ApiService().deleteEvent(event.id);
-                            }
-                    if (context.mounted) {
-                      Navigator.pop(context, true);
-                    }
-                  }
-                },
-                icon: const Icon(Icons.delete_forever_rounded, size: 18),
-                label: const Text("Usuń",
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        if (confirm != true) return;
+
+                        try {
+                          await ApiService().deleteMyEvent(event.id);
+                          if (context.mounted) {
+                            Navigator.pop(context, true);
+                          }
+                        } catch (error) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Nie udało się usunąć: $error"),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(
+                        Icons.delete_forever_rounded,
+                        size: 18,
+                      ),
+                      label: const Text(
+                        "Usuń",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-      ),
+            )
+          : null,
     );
   }
 }

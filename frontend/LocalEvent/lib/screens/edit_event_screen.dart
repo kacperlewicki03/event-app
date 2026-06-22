@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:event_app/screens/map_picker_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -9,12 +11,10 @@ import '../utils/colors/app_colors.dart';
 
 class EditEventScreen extends StatefulWidget {
   final Event event;
-  final bool ownedMode;
 
   const EditEventScreen({
     super.key,
     required this.event,
-    this.ownedMode = false,
   });
 
   @override
@@ -66,15 +66,42 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
   Future<String> getLocationName(LatLng latLng) async {
     try {
-      List<Placemark> placemarks =
-          await placemarkFromCoordinates(latLng.latitude, latLng.longitude);
+      final placemarks = await placemarkFromCoordinates(
+        latLng.latitude,
+        latLng.longitude,
+      ).timeout(const Duration(seconds: 8));
+
+      if (placemarks.isEmpty) {
+        return _coordinatesFallback(latLng);
+      }
+
       final place = placemarks.first;
-      return [place.street, place.subLocality, place.locality]
-          .where((e) => e != null && e.isNotEmpty)
-          .join(", ");
+      final addressParts = [
+        place.street,
+        place.subLocality,
+        place.locality,
+      ]
+          .whereType<String>()
+          .where((part) => part.trim().isNotEmpty)
+          .toList();
+
+      if (addressParts.isEmpty) {
+        return _coordinatesFallback(latLng);
+      }
+
+      return addressParts.join(", ");
+    } on TimeoutException {
+      return _coordinatesFallback(latLng);
     } catch (e) {
-      return "Wybrany punkt na mapie";
+      debugPrint("Błąd pobierania adresu: $e");
+      return _coordinatesFallback(latLng);
     }
+  }
+
+  String _coordinatesFallback(LatLng latLng) {
+    return "Wybrany punkt: "
+        "${latLng.latitude.toStringAsFixed(5)}, "
+        "${latLng.longitude.toStringAsFixed(5)}";
   }
 
   @override
@@ -226,23 +253,22 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
                   try {
                     final eventData = {
-                        "title": titleController.text.trim(),
-                        "description": descriptionController.text.trim(),
-                        "category": selectedCategory,
-                        "date": formattedDate,
-                        "time": formattedTime,
-                        "location": selectedLocationName,
-                        "latitude": selectedLocation!.latitude,
-                        "longitude": selectedLocation!.longitude,
-                        "image_url": "",
-                        "status": "UPCOMING"
-                        };
+                      "title": titleController.text.trim(),
+                      "description": descriptionController.text.trim(),
+                      "category": selectedCategory,
+                      "date": formattedDate,
+                      "time": formattedTime,
+                      "location": selectedLocationName,
+                      "latitude": selectedLocation!.latitude,
+                      "longitude": selectedLocation!.longitude,
+                      "image_url": "",
+                      "status": "UPCOMING"
+                    };
 
-                    if (widget.ownedMode) {
-                      await ApiService().updateMyEvent(widget.event.id, eventData);
-                    } else {
-                      await ApiService().updateEvent(widget.event.id, eventData);
-                    }
+                    await ApiService().updateMyEvent(
+                      widget.event.id,
+                      eventData,
+                    );
 
                     if (mounted) {
                       Navigator.pop(context, true);

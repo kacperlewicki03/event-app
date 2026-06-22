@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'map_picker_screen.dart';
@@ -33,17 +35,42 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   Future<String> getLocationName(LatLng latLng) async {
     try {
-      List<Placemark> placemarks =
-          await placemarkFromCoordinates(latLng.latitude, latLng.longitude);
+      final placemarks = await placemarkFromCoordinates(
+        latLng.latitude,
+        latLng.longitude,
+      ).timeout(const Duration(seconds: 8));
+
+      if (placemarks.isEmpty) {
+        return _coordinatesFallback(latLng);
+      }
 
       final place = placemarks.first;
+      final addressParts = [
+        place.street,
+        place.subLocality,
+        place.locality,
+      ]
+          .whereType<String>()
+          .where((part) => part.trim().isNotEmpty)
+          .toList();
 
-      return [place.street, place.subLocality, place.locality]
-          .where((e) => e != null && e.isNotEmpty)
-          .join(", ");
+      if (addressParts.isEmpty) {
+        return _coordinatesFallback(latLng);
+      }
+
+      return addressParts.join(", ");
+    } on TimeoutException {
+      return _coordinatesFallback(latLng);
     } catch (e) {
-      return "Wybrany punkt na mapie";
+      debugPrint("Błąd pobierania adresu: $e");
+      return _coordinatesFallback(latLng);
     }
+  }
+
+  String _coordinatesFallback(LatLng latLng) {
+    return "Wybrany punkt: "
+        "${latLng.latitude.toStringAsFixed(5)}, "
+        "${latLng.longitude.toStringAsFixed(5)}";
   }
 
   @override
